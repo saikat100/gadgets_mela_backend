@@ -1,0 +1,38 @@
+# Dependency directories
+node_modules/
+npm-debug.log*
+
+# dotenv environment files
+.env
+.env.* # any variant like .env.local
+
+# Build output
+dist/
+build/
+coverage/
+tsconfig.tsbuildinfo
+
+# Logs
+logs/
+*.log
+log/
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Misc
+*.tgz
+*.gz
+
+# MongoDB dump/restore files
+dump/
