@@ -3,6 +3,18 @@ import mongoose from 'mongoose';
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   description: { type: String, trim: true },
+  category: { 
+    type: String, 
+    required: true, 
+    trim: true,
+    enum: ['Mobile', 'Laptop', 'Tablet', 'Accessories', 'Audio', 'Smartwatch', 'Camera', 'Gaming', 'Other'],
+    message: '{VALUE} is not a valid category'
+  },
+  subCategory: { 
+    type: String, 
+    trim: true,
+    default: ''
+  },
   price: { 
     type: Number, 
     required: true, 
@@ -23,7 +35,7 @@ const productSchema = new mongoose.Schema({
   },
 }, { 
   timestamps: true,
-  indexes: [{ name: 1 }, { price: 1 }]
+  indexes: [{ name: 1 }, { price: 1 }, { category: 1 }]
 });
 
 const Product = mongoose.model('Product', productSchema);
