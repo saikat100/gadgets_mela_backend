@@ -1,23 +1,28 @@
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true }, // Added trim to remove whitespace
+  name: { type: String, required: true, trim: true },
   description: { type: String, trim: true },
   price: { 
     type: Number, 
     required: true, 
-    min: [0, 'Price must be non-negative'] // Prevent negative prices
+    min: [0, 'Price must be non-negative']
+  },
+  discount: {
+    type: Number,
+    default: 0,
+    min: [0, 'Discount must be non-negative'],
+    max: [100, 'Discount cannot exceed 100%']
   },
   imageUrl: { type: String, required: true },
   stock: { 
     type: Number, 
     required: true, 
     default: 0, 
-    min: [0, 'Stock must be non-negative'] // Prevent negative stock
+    min: [0, 'Stock must be non-negative']
   },
 }, { 
   timestamps: true,
-  // Optional: Index for faster searches
   indexes: [{ name: 1 }, { price: 1 }]
 });
 
