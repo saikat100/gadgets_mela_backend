@@ -7,8 +7,6 @@ const productSchema = new mongoose.Schema({
     type: String, 
     required: true, 
     trim: true,
-    enum: ['Mobile', 'Laptop', 'Tablet', 'Accessories', 'Audio', 'Smartwatch', 'Camera', 'Gaming', 'Other'],
-    message: '{VALUE} is not a valid category'
   },
   subCategory: { 
     type: String, 

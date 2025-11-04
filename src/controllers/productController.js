@@ -3,12 +3,25 @@ import Product from '../models/Product.js';
 // GET all products
 export const getProducts = async (req, res, next) => {
   try {
-    const products = await Product.find(); // Add .sort() or .limit() as needed
+    const { category, subCategory, sub } = req.query;
+    const filter = {};
+    if (category) {
+      filter.category = { $regex: `^${escapeRegex(String(category))}$`, $options: 'i' };
+    }
+    const subVal = subCategory || sub;
+    if (subVal) {
+      filter.subCategory = { $regex: `^${escapeRegex(String(subVal))}$`, $options: 'i' };
+    }
+    const products = await Product.find(filter);
     res.json(products);
   } catch (err) {
     next(err); // Pass to central error handler
   }
 };
+
+function escapeRegex(input) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // GET single product by ID
 export const getProductById = async (req, res, next) => {
