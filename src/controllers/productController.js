@@ -3,7 +3,7 @@ import Product from '../models/Product.js';
 // GET all products
 export const getProducts = async (req, res, next) => {
   try {
-    const { category, subCategory, sub } = req.query;
+    const { category, subCategory, sub, q, search } = req.query;
     const filter = {};
     if (category) {
       filter.category = { $regex: `^${escapeRegex(String(category))}$`, $options: 'i' };
@@ -11,6 +11,11 @@ export const getProducts = async (req, res, next) => {
     const subVal = subCategory || sub;
     if (subVal) {
       filter.subCategory = { $regex: `^${escapeRegex(String(subVal))}$`, $options: 'i' };
+    }
+    const queryText = q || search;
+    if (queryText) {
+      const rx = { $regex: escapeRegex(String(queryText)), $options: 'i' };
+      filter.$or = [{ name: rx }, { description: rx }];
     }
     const products = await Product.find(filter);
     res.json(products);
