@@ -8,6 +8,39 @@ export const createOrder = async (req, res, next) => {
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: 'No products specified' });
     }
+
+    // 1. Validate stock for all products and prepare updates
+    // We'll attempt to reserve stock for each product.
+    // If any fails, we must rollback.
+    const reservedProducts = [];
+    
+    for (const item of products) {
+      const product = await Product.findOneAndUpdate(
+        { _id: item.product, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+
+      if (!product) {
+        // Rollback previously reserved products
+        for (const reserved of reservedProducts) {
+          await Product.findByIdAndUpdate(reserved.product, { 
+            $inc: { stock: reserved.quantity } 
+          });
+        }
+        return res.status(400).json({ 
+          message: `Insufficient stock for product ID: ${item.product} or product not found` 
+        });
+      }
+
+      reservedProducts.push({
+        product: item.product,
+        quantity: item.quantity,
+        name: product.name,
+        imageUrl: product.imageUrl
+      });
+    }
+
     const mappedAddress = shippingAddress ? {
       name: shippingAddress.fullName || shippingAddress.name || '',
       phone: shippingAddress.phone || '',
@@ -17,31 +50,29 @@ export const createOrder = async (req, res, next) => {
       postalCode: shippingAddress.postalCode || '',
       country: shippingAddress.country || '',
     } : undefined;
-    // Enrich products with snapshot of name and imageUrl
-    const ids = products.map((p) => p.product);
-    const dbProducts = await Product.find({ _id: { $in: ids } }, { _id: 1, name: 1, imageUrl: 1 });
-    const idToProduct = new Map(dbProducts.map((p) => [String(p._id), p]));
-
-    const productsWithSnapshot = products.map((p) => {
-      const prod = idToProduct.get(String(p.product));
-      return {
-        product: p.product,
-        quantity: p.quantity,
-        name: prod?.name,
-        imageUrl: prod?.imageUrl,
-      };
-    });
 
     const order = new Order({
       user: req.user._id,
-      products: productsWithSnapshot,
+      products: reservedProducts,
       total,
       paymentId,
       shippingAddress: mappedAddress,
       status: paymentId && paymentId !== 'COD' ? 'paid' : 'pending'
     });
-    await order.save();
-    res.status(201).json(order);
+
+    try {
+      await order.save();
+      res.status(201).json(order);
+    } catch (saveError) {
+      // If order save fails, rollback stock
+      for (const reserved of reservedProducts) {
+        await Product.findByIdAndUpdate(reserved.product, { 
+          $inc: { stock: reserved.quantity } 
+        });
+      }
+      throw saveError;
+    }
+
   } catch (err) {
     next(err);
   }
@@ -91,6 +122,30 @@ export const getAllOrders = async (req, res, next) => {
   try {
     const orders = await Order.find().populate('user').populate('products.product');
     res.json(orders);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Cancel an order for the logged-in user if it's still pending
+export const cancelMyOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.status !== 'pending') {
+      return res.status(400).json({ message: 'Only pending orders can be cancelled' });
+    }
+    
+    // Restore stock
+    for (const item of order.products) {
+      await Product.findByIdAndUpdate(item.product, { 
+        $inc: { stock: item.quantity } 
+      });
+    }
+
+    order.status = 'cancelled';
+    await order.save();
+    res.json({ message: 'Order cancelled', order });
   } catch (err) {
     next(err);
   }

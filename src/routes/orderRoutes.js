@@ -1,7 +1,7 @@
 import express from 'express';
 import passport from 'passport';
 import { requireAdmin } from '../middlewares/requireAdmin.js';
-import { createOrder, getMyOrders, getAllOrders, getMyOrderById } from '../controllers/orderController.js';
+import { createOrder, getMyOrders, getAllOrders, getMyOrderById, cancelMyOrder } from '../controllers/orderController.js';
 
 const router = express.Router();
 
@@ -13,6 +13,9 @@ router.get('/mine', passport.authenticate('jwt', { session: false }), getMyOrder
 
 // Single order (login required)
 router.get('/:id', passport.authenticate('jwt', { session: false }), getMyOrderById);
+
+// Cancel my pending order (login required)
+router.post('/:id/cancel', passport.authenticate('jwt', { session: false }), cancelMyOrder);
 
 // List all orders (admin only)
 router.get('/', passport.authenticate('jwt', { session: false }), requireAdmin, getAllOrders);
