@@ -32,7 +32,7 @@ app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 1000, // Increased for development
     standardHeaders: true,
     legacyHeaders: false,
   })

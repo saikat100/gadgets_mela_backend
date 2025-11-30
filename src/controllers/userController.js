@@ -56,3 +56,13 @@ export const promoteToAdmin = async (req, res, next) => {
     next(err);
   }
 };
+
+// Admin-only: Get all users
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+};

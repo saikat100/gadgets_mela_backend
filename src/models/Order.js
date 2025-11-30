@@ -12,7 +12,7 @@ const orderSchema = new mongoose.Schema({
   ],
   total: { type: Number, required: true },
   paymentId: { type: String }, // Stripe payment/session id
-  status: { type: String, enum: ['pending', 'paid', 'shipped', 'cancelled'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled'], default: 'pending' },
   shippingAddress: {
     name: String,
     phone: String,
